@@ -8,3 +8,4 @@ fake-headers==1.0.2
 feedparser==6.0.8
 markdownify==0.11.6
 beautifulsoup4==4.12.2
+python-dotenv==1.0.0
