@@ -1,7 +1,5 @@
 import pinecone
 import os
-import openai
-import asyncio
 
 
 class PineconeM:

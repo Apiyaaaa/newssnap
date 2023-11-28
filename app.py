@@ -6,6 +6,7 @@ import time
 from dotenv import load_dotenv
 import os
 import openai
+from collections import deque
 # 加载环境变量
 load_dotenv()
 
@@ -19,7 +20,6 @@ if os.getenv("PINECONE_KEY") is None:
 
 # 配置数据库
 mongo = MyMongo()
-redis = RedisHelper()
 openai.api_key = os.getenv("OPENAI_API_KEY")
 # 配置信号量
 semaphore = 5
@@ -45,11 +45,11 @@ rss_links = {
 # 计算本次花费
 cost = 0
 news_count = 0
-
+waiting_news = deque()
 # 用于处理新闻的协程
 
 
-async def process_news(news, mongo, redis, semaphore):
+async def process_news(news, mongo, semaphore):
     global cost, news_count
     print('开始处理', news['link'])
     try:
@@ -60,7 +60,7 @@ async def process_news(news, mongo, redis, semaphore):
         news['ai_summary'] = e_s_object['summary']
         news['embedding'] = e_s_object['embedding']
     except Exception as e:
-        redis.r.rpush('waiting_news', str(news))
+        waiting_news.append(news)
         print(e, '重新加入队列', news['link'])
         return
     mongo.saveNews(collection='news', news=news)
@@ -68,26 +68,25 @@ async def process_news(news, mongo, redis, semaphore):
 
 
 # 用于加载新闻的函数
-def load_news(redis, mongo, rss_links):
+def load_news(mongo, rss_links):
     for link in rss_links:
         parse = RssParser(rss_links[link])
         parse.parse()
         for news in parse.news:
             news_data = news.get()
             if not mongo.db['news'].find_one({'link': news_data['link']}):
-                redis.r.rpush('waiting_news', str(news_data))
-    print('redis填充成功', '共', redis.r.llen('waiting_news'), '条新闻')
+                waiting_news.append(news_data)
+    print('待处理新闻填充成功', '共', len(waiting_news), '条新闻')
 
 # 用于处理新闻的函数
 
 
-async def news_processor(redis, mongo, semaphore):
+async def news_processor(mongo, semaphore):
     semaphore = asyncio.Semaphore(semaphore)
     tasks = []
-    while redis.r.llen('waiting_news') > 0:
-        news = redis.r.lpop('waiting_news')
-        news = eval(news)
-        task = asyncio.create_task(process_news(news, mongo, redis, semaphore))
+    while len(waiting_news) > 0:
+        news = waiting_news.popleft()
+        task = asyncio.create_task(process_news(news, mongo, semaphore))
         tasks.append(task)
         if len(tasks) >= 10:
             await asyncio.gather(*tasks)
@@ -98,14 +97,13 @@ async def news_processor(redis, mongo, semaphore):
 def main():
     # 清空数据库 如果需要持续化就禁用
     start = time.time()
-    # redis.clean()
-    print(redis.r.keys())
+
     # 加载新闻
-    load_news(redis, mongo, rss_links)
+    load_news(mongo, rss_links)
     # 处理新闻 获取摘要和embedding
-    asyncio.run(news_processor(redis, mongo, semaphore))
+    asyncio.run(news_processor(mongo, semaphore))
     print('本次估计花费：', cost)
-    time_to_min = cost / 1000 / 60
+    time_to_min = (time.time() - start) / 60
     print('本次处理时间为：', time_to_min, '分钟')
     print('共处理', news_count, '条新闻')
 

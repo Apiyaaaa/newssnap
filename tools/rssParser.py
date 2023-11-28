@@ -53,7 +53,7 @@ class RssParser:
                 # convert to timestamp
                 # print(entry)
                 news.date = mktime(entry.published_parsed)
-                
+
             if 'author' in entry:
                 news.author = entry.author
             self.news.append(news)

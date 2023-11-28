@@ -1,5 +1,3 @@
-import redis
-import datetime
 from pymongo.mongo_client import MongoClient
 import os
 
@@ -18,17 +16,3 @@ class MyMongo:
         except Exception as e:
             print(e)
             return False
-
-
-class RedisHelper():
-    def formatTime(self):
-        return datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-
-    def __init__(self):
-        self.r = redis.StrictRedis(
-            host='localhost', port=6379, db=0, decode_responses=True, charset='utf-8')
-        print(self.formatTime(), 'redis连接成功')
-
-    def clean(self):
-        self.r.flushdb()
-        print(self.formatTime(), 'redis清空成功')
