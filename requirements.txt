@@ -1,0 +1,10 @@
+pymongo>=3.12
+scikit-learn>=1.2
+openai==0.27.4
+numpy==1.25.0
+tiktoken==0.4.0
+redis==3.5.3
+fake-headers==1.0.2
+feedparser==6.0.8
+markdownify==0.11.6
+beautifulsoup4==4.12.2
