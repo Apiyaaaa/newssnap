@@ -1,6 +1,6 @@
 from tools.myOpenai import MyOpenAI
 from tools.rssParser import RssParser
-from dbM import MyMongo, RedisHelper
+from dbM import MyMongo
 import asyncio
 import time
 from dotenv import load_dotenv
