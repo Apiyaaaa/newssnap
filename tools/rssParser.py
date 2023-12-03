@@ -30,12 +30,13 @@ class News:
 
 
 class RssParser:
-    def __init__(self, url) -> None:
+    def __init__(self, url, source) -> None:
         self.url = url
         self.entries = None
         self.news = []
         self.fields = ['title', 'link', 'summary', 'source',
                        'published', 'author']
+        self.source = source
 
     def parse(self):
         self.entries = feedparser.parse(self.url).entries
@@ -47,15 +48,11 @@ class RssParser:
                 news.link = entry.link
             if 'summary' in entry:
                 news.content = self.markdownify(entry.summary)
-            if 'source' in entry:
-                news.source = entry.source
             if 'published_parsed' in entry:
-                # convert to timestamp
-                # print(entry)
                 news.date = mktime(entry.published_parsed)
-
             if 'author' in entry:
                 news.author = entry.author
+            news.source = self.source
             self.news.append(news)
 
     def get_news(self):

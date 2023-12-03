@@ -9,3 +9,7 @@ __pycache__/
 *.pyc
 
 *.env
+
+# 忽略test文件
+
+test/

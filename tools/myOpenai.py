@@ -48,7 +48,7 @@ class MyOpenAI():
                 matrix - kmeans.cluster_centers_[i], axis=1)
             index = np.argmin(distance)
             reduced_list.append(index)
-        reduced_list = sorted(reduced_list)
+        reduced_list = sorted(reduced_list)[0:5] if len(reduced_list) > 5 else reduced_list
         return [splited_text[i] for i in reduced_list]
 
     def split_text(self, text, max_token=500):
@@ -122,6 +122,10 @@ class MyOpenAI():
             return self.summary
 
     async def aembedding(self, text):
+        if self.num_tokens_from_string(text, self.embeddingmodel) >= 8000:
+            splited_text = self.split_text(text, max_token=8000)
+            vectors = await asyncio.gather(*[self.aembedding(i) for i in splited_text])
+            return np.array(vectors).mean(axis=0).tolist() 
         n = 0
         while n < 3:
             try:
