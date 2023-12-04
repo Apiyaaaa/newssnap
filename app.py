@@ -24,8 +24,8 @@ mongo = MyMongo()
 openai.api_key = os.getenv("OPENAI_API_KEY")
 # 配置信号量
 semaphore = 5
+
 # 配置rss链接
-# TODO: 从数据库中读取 以后再说
 def get_rss_links():
     rss_links = mongo.db['rss'].find({'status': 'active'})
     rss_links = {link['name']: link['link'] for link in rss_links}
