@@ -1,5 +1,6 @@
 from tools.myOpenai import MyOpenAI
 from tools.rssParser import RssParser
+from tools.pineconeM import PineconeM
 from dbM import MyMongo
 import asyncio
 import time
@@ -22,6 +23,7 @@ if os.getenv("PINECONE_KEY") is None:
 # 配置数据库
 mongo = MyMongo()
 openai.api_key = os.getenv("OPENAI_API_KEY")
+pinecone = PineconeM()
 # 配置信号量
 semaphore = 5
 
@@ -59,7 +61,11 @@ async def process_news(news, mongo, semaphore):
         waiting_news.append(news)
         logging.warning(f'处理新闻 {news["link"]} 失败')
         return
-    mongo.saveNews(collection='news', news=news)
+    mongoObj = mongo.saveNews(collection='news', news=news)
+    ebb = news['embedding']
+    del news['embedding']
+    del news['content']
+    pinecone.insert(str(mongoObj.upserted_id), ebb, news)
     news_count += 1
     logging.info(f'处理新闻 {news["link"]} 完成， 共花费 {myopenai.total_cost()}')
 
