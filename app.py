@@ -65,6 +65,9 @@ async def process_news(news, mongo, semaphore):
     ebb = news['embedding']
     del news['embedding']
     del news['content']
+    for i in news:
+        if news[i] is None:
+            news[i] = 'N/A'
     pinecone.insert(str(mongoObj.upserted_id), ebb, news)
     news_count += 1
     logging.info(f'处理新闻 {news["link"]} 完成， 共花费 {myopenai.total_cost()}')

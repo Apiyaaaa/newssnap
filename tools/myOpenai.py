@@ -81,7 +81,7 @@ class MyOpenAI():
                 response = await openai.ChatCompletion.acreate(
                     model=self.summarymodel,
                     messages=[
-                        {"role": "system", "content": "你是一位新闻编辑，你需要用中文生成以下新闻的摘要："},
+                        {"role": "system", "content": "你是一位新闻编辑，你需要用中文精炼地生成以下新闻的摘要，摘要不能超过150个字："},
                         {"role": "user", "content": text}
                     ],
                     temperature=0,
@@ -114,7 +114,7 @@ class MyOpenAI():
         # 再对每个中心点生成摘要
         splited_text = await self.reduce_text(splited_text)
         results = await asyncio.gather(*[self.get_summary(i) for i in splited_text])
-        finished_text = self.split_text(''.join(results), max_token=3000)
+        finished_text = self.split_text(''.join(results), max_token=500)
         if len(finished_text) > 1:
             return await self.reduce_summary(''.join(finished_text))
         else:
